@@ -6,7 +6,7 @@ Cloud-Side Beverage Shop Smart Order Assistant - A distributed multi-agent syste
 云边奶茶铺智能助手Demo, 支持一站式咨询、点单与反馈，持续根据用户行为和喜好推荐并下单产品, 从而实现"越来越懂我", "越用越好用"的用户体验。
 
 Demo的用户端能力主要包括:
-1. 产品咨询与产品推荐。根据用户习惯和喜好, 为用户推荐奶茶产品并介绍, 同时分析并记录用户习惯和喜好。
+1. 产品咨询与产品推荐。根据用户习惯和喜好, 为用户推荐奶茶产品并介绍, 同时分析并记录用户习惯和喜好。内置知识库导入功能，自动加载本地产品和品牌信息。
 2. 点单与订单查询。根据用户需求下订单、修改订单和查询订单, 同时分析并记录用户习惯和喜好。
 3. 反馈与投诉处理。处理用户反馈, 对于投诉或差评安抚情绪并出解决方案, 同时分析并记录用户习惯和喜好。
 
@@ -15,35 +15,42 @@ Demo的管理端能力主要包括: 定时分析用户消费和反馈数据, 并
 ### 服务架构
 ![服务架构](https://img.alicdn.com/imgextra/i4/O1CN01vctYqQ22cB0D4BDlF_!!6000000007140-2-tps-5298-1406.png)
 
+### 核心组件配置 (common 模块)
+
+本项目在 `common` 模块中预置了多项关键配置，以简化开发并提供开箱即用的AI能力：
+
+- **大语言模型 (LLM)**: 默认采用 **OpenAI 兼容协议** (`OpenAiChatModel`) 作为主要的对话模型。可以通过 `application.yml` 和 `.env` 快速切换至任何兼容 OpenAI 接口的模型服务。
+- **嵌入模型 (Embedding Model)**: 默认内嵌了 **`BgeSmallZhV15EmbeddingModel`**。该模型针对中文优化，并作为本地轻量级方案直接在应用中运行，无需依赖外部 API 即可进行高效的文本向量化。
+- **向量数据库 (Vector Store)**: 默认采用 **`Neo4jVectorStore`** 进行知识图谱和向量数据的双重存储。它不仅用于存储产品知识 (`kbVectorStore`)，还用于存储对话记忆 (`convMemoryVectorStore`)，充分利用图数据库的关系查询和向量搜索能力。
+
 ### 项目结构
+- `common/`: 核心组件与公共配置 (含 LLM、Embedding、Neo4j 向量库及 RAG 核心逻辑)
 - `frontend/`: 前端界面
 - `supervisor-agent/`: 监督者智能体
-- `consult-sub-agent/`: 咨询子智能体
+- `consult-sub-agent/`: 咨询子智能体（包含知识库检索和本地文档自动导入）
 - `feedback-sub-agent/`: 反馈子智能体
 - `order-sub-agent/`: 订单子智能体
 - `*-mcp-server/`: MCP服务器
-- `docker/middleware/`: 中间件服务（MySQL、Nacos、Redis）
+- `docker/middleware/`: 中间件服务（MySQL、Nacos、Redis、Neo4j）
 
 ### 环境要求
 
 在开始之前，请确保您的系统已安装以下软件：
 
-- **Docker**: 用于运行中间件服务（MySQL、Nacos、Redis）
+- **Docker**: 用于运行中间件服务（MySQL、Nacos、Redis、Neo4j）
 - **Java 17+**: 用于运行Spring Boot应用
 - **Node.js 20+**: 用于构建和运行前端应用
 - **Maven**: 用于构建Java项目
 
 ## 启动服务
 
-### 步骤 1: 上传知识库到百炼
+### 步骤 1: 准备本地知识库 (可选)
 
-在启动应用服务之前，需要将咨询子智能体的知识库文件上传到阿里云百炼知识库。
-
-知识库文件位于 `consult-sub-agent/src/main/resources/kownledge/`, 包含两个文件：
+当前Demo已经实现了知识库自动导入功能。知识库文件位于 `consult-sub-agent/src/main/resources/knowledge/`，包含：
 - `brand-overview.md`: 品牌概览和理念
 - `products.md`: 产品详细介绍
 
-创建知识库并上传以上文件, 并获取知识库ID。
+应用启动或调用相应的接口时，这些文件会被自动解析并利用内置的 `BgeSmallZhV15EmbeddingModel` 向量化存入本地的 Neo4j 向量数据库中。您不再需要手动上传到百炼。如果仍需要使用百炼知识库，请保留原配置方式。
 
 ### 步骤 2: 环境变量配置
 
@@ -51,21 +58,19 @@ Demo的管理端能力主要包括: 定时分析用户消费和反馈数据, 并
 
 #### 必需配置
 确保功能完整运行的主要配置包括:
-- `DASHSCOPE_API_KEY`: DashScope API 密钥（阿里云通义千问API）
-- `DASHSCOPE_INDEX_ID`: DashScope 知识库 ID（百炼知识库ID）
+- `AI_OPENAI_BASE_URL`: OpenAI协议接口的base url (必填，代理大模型服务地址)
+- `AI_OPENAI_API_KEY`: OpenAI协议接口的api key (必填，用于调用对话模型)
 - `MEM0_API_KEY`: Mem0 API密钥（用于记忆管理）
-- `AI_OPENAI_BASE_URL`: OpenAI协议接口的base url
-- `AI_OPENAI_API_KEY`: OpenAI协议接口的api key
+- `DASHSCOPE_API_KEY`: DashScope API 密钥（可选，当需要回退到阿里云通义千问API时使用）
 
 #### 获取API密钥
-- **DashScope API**: 访问 [阿里云DashScope控制台](https://dashscope.console.aliyun.com/) 获取API密钥
-- **百炼知识库ID**: 访问 [阿里云百炼控制台](https://bailian.console.aliyun.com/) 创建知识库并获取ID
 - **Mem0 API**: 访问 [Mem0官网](https://mem0.ai/) 注册并获取API密钥
+- **DashScope API**: 访问 [阿里云DashScope控制台](https://dashscope.console.aliyun.com/) 获取API密钥
 
 
 ### 步骤 3: 启动基础服务（Docker Compose）
 
-启动MySQL、Nacos和Redis等基础服务：
+启动MySQL、Nacos、Redis和Neo4j等基础服务：
 
 ```bash
 # 进入中间件目录
@@ -124,12 +129,13 @@ docker-compose down
 - **订单子智能体**: http://localhost:10006 - 处理订单相关请求
 - **反馈子智能体**: http://localhost:10007 - 处理用户反馈
 - **订单MCP服务器**: http://localhost:10002 - 订单管理服务
-- **反馈MCP服务器**: http://localhost:10004 - 反馈管理服务
+- **反馈MCP服务器**: http://localhost:10004 - 反央管理服务
 - **记忆MCP服务器**: http://localhost:10010 - 记忆管理服务
 
 ### 基础服务
 - **MySQL数据库**: localhost:3306
 - **Redis缓存**: localhost:6379
+- **Neo4j图数据库**: localhost:7687 (bolt) / 7474 (http)
 
 ## 故障排除
 
@@ -143,14 +149,12 @@ docker-compose down
 2. **应用启动失败**
    - 检查环境变量是否正确配置
    - 确保API密钥有效
-   - 确保知识库ID已正确配置
    - 查看日志文件: `logs/` 目录
 
 3. **知识库相关问题**
-   - 确保知识库文件已成功上传到百炼
-   - 检查知识库ID是否正确配置在环境变量中
-   - 确保DashScope API密钥有访问知识库的权限
-   - 等待知识库文档解析完成（通常需要几分钟）
+   - 检查 `consult-sub-agent` 是否能够正确读取 `resources/knowledge` 下的文档
+   - 确保内置的 `BgeSmallZhV15EmbeddingModel` 初始化成功，未出现内存或依赖错误。
+   - 检查 Neo4j 服务是否启动，并且可以正确建立连接。
 
 4. **前端无法访问**
    - 确保Node.js版本为20+
@@ -158,9 +162,9 @@ docker-compose down
    - 重新构建前端: `cd frontend && npm run dev`
 
 5. **数据库连接失败**
-   - 确保MySQL服务已启动
+   - 确保MySQL/Neo4j服务已启动
    - 检查数据库密码配置
-   - 查看MySQL日志: `docker/middleware/mysql/log/`
+   - 查看MySQL/Neo4j日志: `docker/middleware/xxx/log/`
 
 ### 日志查看
 
@@ -177,6 +181,7 @@ cd docker/middleware
 docker-compose logs -f nacos
 docker-compose logs -f mysql
 docker-compose logs -f redis
+docker-compose logs -f neo4j
 ```
 
 ## 其他说明
@@ -188,7 +193,7 @@ docker-compose logs -f redis
 - **如需集成**: 用户需要自行部署Higress网关，并通过简单的配置修改将服务路由到网关
 - **集成步骤**: 
   1. 部署Higress网关服务, 并在网关配置LLM路由或MCP Server
-  2. 将LLM地址替换为Higress路由: 将Agent使用的ChatModel由dashscopeChatModel替换为openAiChatModel, 同时在application.yml中spring.ai.openai.base-url设置网关地址
+  2. 将LLM地址替换为Higress路由: 当前Agent默认已切换为使用OpenAiChatModel, 您只需在application.yml中将spring.ai.openai.base-url设置网关地址即可。
   3. 将order-service mcp地址改为Higress代理的mcp server: 在application.yml中注释spring.ai.alibaba.mcp.nacos.client.sse.connections中order-mcp-server相关内容, 同时取消spring.ai.mcp.client.sse.connections中order-service相关注释, 并正确配置网关Mcp Server地址
 
 #### Spring AI Alibaba Admin
@@ -198,4 +203,3 @@ docker-compose logs -f redis
   1. 部署Spring AI Alibaba Admin服务, 参考[Spring AI Alibaba Admin](https://github.com/spring-ai-alibaba/spring-ai-alibaba-admin/blob/main/README-zh.md)
   2. 智能体服务接入Admin, 参考参考[Spring AI Alibaba Admin](https://github.com/spring-ai-alibaba/spring-ai-alibaba-admin/blob/main/README-zh.md)
   3. 通过Admin控制台进行智能体的监控、配置和管理
-
