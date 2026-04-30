@@ -16,7 +16,7 @@ spring:
       - com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeImageAutoConfiguration
       - com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeVideoAutoConfiguration
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:multi-agent-demo}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useAffectedRows=true
+    url: jdbc:mysql://${DB_HOST:10.30.3.93}:${DB_PORT:3876}/${DB_NAME:multi-agent-demo}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useAffectedRows=true
     username: ${DB_USERNAME:multi_agent_demo}
     password: ${DB_PASSWORD:multi_agent_demo@321}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -35,21 +35,25 @@ spring:
       observations:
         log-query-response: true
     openai:
-      api-key: ${AI_OPENAI_API_KEY:-}
-      base-url: ${AI_OPENAI_BASE_URL:-}
-    dashscope:
-      api-key: ${DASHSCOPE_API_KEY:-}
-      # 文档检索配置
-      document-retrieval:
-        index-id: ${DASHSCOPE_INDEX_ID:-}
-        enable-reranking: ${DASHSCOPE_ENABLE_RERANKING:true}
-        rerank-top-n: ${DASHSCOPE_RERANK_TOP_N:2}
-        rerank-min-score: ${DASHSCOPE_RERANK_MIN_SCORE:0}
+      api-key: ${OPENAI_API_KEY:sk-ekqtuhborqbnfpyaaoierwlhuvjrhnkfufmasninxwsojgdh}
+      base-url: ${OPENAI_BASE_URL:https://api.siliconflow.cn}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:Pro/deepseek-ai/DeepSeek-V3.2}
+          stream-usage: true
+#    dashscope:
+#      api-key: ${DASHSCOPE_API_KEY:-}
+#      # 文档检索配置
+#      document-retrieval:
+#        index-id: ${DASHSCOPE_INDEX_ID:-}
+#        enable-reranking: ${DASHSCOPE_ENABLE_RERANKING:true}
+#        rerank-top-n: ${DASHSCOPE_RERANK_TOP_N:2}
+#        rerank-min-score: ${DASHSCOPE_RERANK_MIN_SCORE:0}
     alibaba:
       agent:
         proxy:
           nacos:
-            serverAddr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            serverAddr: ${NACOS_SERVER_ADDR:10.30.3.93:7748}
             username: ${NACOS_USERNAME:nacos}
             password: ${NACOS_PASSWORD:nacos}
             promptKey: ${PROMPT_KEY:consult-sub-agent-instruction}
@@ -63,7 +67,7 @@ spring:
       mcp:
         nacos:
           namespace: ${NACOS_NAMESPACE:public}
-          server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+          server-addr: ${NACOS_SERVER_ADDR:10.30.3.93:7748}
           username: ${NACOS_USERNAME:nacos}
           password: ${NACOS_PASSWORD:nacos}
           client:
@@ -75,7 +79,7 @@ spring:
                   version: 0.0.1
       a2a:
         nacos:
-          server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+          server-addr: ${NACOS_SERVER_ADDR:10.30.3.93:7748}
           username: ${NACOS_USERNAME:nacos}
           password: ${NACOS_PASSWORD:nacos}
           discovery:
@@ -156,10 +160,12 @@ mybatis:
 
 # Spring AI Alibaba Admin配置
 management:
+  endpoints:
+    enabled-by-default: false
   otlp:
     tracing:
       export:
-        enabled: true
+        enabled: false
       endpoint: ${ADMIN_OTLP_ENDPOINT:http://127.0.0.1:4318/v1/traces}
     metrics:
       export:

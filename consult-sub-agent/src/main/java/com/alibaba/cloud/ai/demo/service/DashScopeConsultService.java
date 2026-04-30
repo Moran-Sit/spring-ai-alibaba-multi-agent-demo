@@ -16,10 +16,10 @@
 
 package com.alibaba.cloud.ai.demo.service;
 
-import com.alibaba.cloud.ai.demo.entity.Product;
-import com.alibaba.cloud.ai.demo.mapper.ProductMapper;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
+import com.alibaba.cloud.ai.demo.entity.Product;
+import com.alibaba.cloud.ai.demo.mapper.ProductMapper;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,11 +35,11 @@ import java.util.List;
  * 咨询知识库服务类
  * 提供奶茶店产品和店铺信息的检索服务
  */
-@Service
-public class ConsultService {
-    
-    private static final Logger logger = LoggerFactory.getLogger(ConsultService.class);
-    
+//@Service
+public class DashScopeConsultService implements IConsultService {
+
+    private static final Logger logger = LoggerFactory.getLogger(DashScopeConsultService.class);
+
     @Value("${spring.ai.dashscope.document-retrieval.index-id}")
     private String indexID;
 
@@ -56,11 +56,11 @@ public class ConsultService {
     private String apiKey;
 
     private DashScopeApi dashscopeApi;
-    
+
     @Autowired
     private ProductMapper productMapper;
 
-    public ConsultService() {}
+    public DashScopeConsultService() {}
     
     /**
      * 初始化文档检索器

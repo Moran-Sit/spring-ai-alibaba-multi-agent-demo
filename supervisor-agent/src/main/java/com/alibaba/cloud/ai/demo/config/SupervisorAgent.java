@@ -66,7 +66,7 @@ public class SupervisorAgent {
         A2aRemoteAgent consultAgent = A2aRemoteAgent.builder()
                 .name("consult_agent")
                 .agentCardProvider(agentCardProvider)
-                .description("处理奶茶相关产品、活动等咨询问题")
+                .description("处理奶茶相关产品、活动等咨询问题") //routing的提示词
                 .build();
 
         AgentCard feedbackAgentCard = agentCardProvider.getAgentCard("feedback_agent").getAgentCard();

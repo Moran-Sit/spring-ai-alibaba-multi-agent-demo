@@ -17,7 +17,7 @@
 package com.alibaba.cloud.ai.demo.tools;
 
 import com.alibaba.cloud.ai.demo.entity.Product;
-import com.alibaba.cloud.ai.demo.service.ConsultService;
+import com.alibaba.cloud.ai.demo.service.IConsultService;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ import java.util.List;
 public class ConsultTools {
 
     @Autowired
-    private ConsultService consultService;
+    private IConsultService consultService;
 
     /**
      * 知识库检索工具

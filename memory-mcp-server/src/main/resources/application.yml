@@ -13,7 +13,7 @@ spring:
     alibaba:
       mcp:
         nacos:
-          server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+          server-addr: ${NACOS_SERVER_ADDR:10.30.3.93:7748}
           namespace: ${NACOS_NAMESPACE:public}
           username: ${NACOS_USERNAME:nacos}
           password: ${NACOS_PASSWORD:nacos}
@@ -24,7 +24,7 @@ spring:
 mem0:
   api:
     url: ${MEM0_ADDRESS:https://api.mem0.ai}
-    key: ${MEM0_API_KEY:-}
+    key: ${MEM0_API_KEY:m0-WKkNJAl3AmQmCnXG2JucktqUNWMuNcvMshYRYg74}
   client:
     timeout-seconds: 30
     max-retry-attempts: 3

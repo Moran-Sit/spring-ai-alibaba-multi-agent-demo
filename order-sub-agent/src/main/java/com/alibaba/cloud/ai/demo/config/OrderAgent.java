@@ -47,8 +47,7 @@ public class OrderAgent {
     ToolCallbackProvider toolsProvider;
 
     @Bean
-    public ReactAgent orderSubAgentBean(//@Qualifier("openAiChatModel") ChatModel chatModel,
-										@Qualifier("dashscopeChatModel") ChatModel chatModel,
+    public ReactAgent orderSubAgentBean(@Qualifier("openAiChatModel") ChatModel chatModel,
                                         @Autowired(required = false) @Qualifier("mcpToolCallbacks")
 								        ToolCallbackProvider toolsProvider,
 										@Autowired(required = false) @Qualifier("loadbalancedMcpSyncToolCallbacks")
@@ -87,7 +86,7 @@ public class OrderAgent {
 				.instruction(promptConfig.getOrderAgentInstruction())
 				.inputKey("messages")
 				.outputKey("messages")
-				.tools(tools)
+				.tools(tools).hook
 				.build();
 	}
 }

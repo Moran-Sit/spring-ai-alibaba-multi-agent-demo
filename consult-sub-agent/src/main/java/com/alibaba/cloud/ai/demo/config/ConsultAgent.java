@@ -55,8 +55,7 @@ public class ConsultAgent {
 	}
 
     @Bean
-    public ReactAgent consultSubAgentBean(//@Qualifier("openAiChatModel") ChatModel chatModel,
-										  @Qualifier("dashscopeChatModel") ChatModel chatModel,
+    public ReactAgent consultSubAgentBean(@Qualifier("openAiChatModel") ChatModel chatModel,
                                           @Autowired(required = false)
 										  @Qualifier("loadbalancedMcpSyncToolCallbacks")
 										  ToolCallbackProvider toolsProvider) throws Exception {

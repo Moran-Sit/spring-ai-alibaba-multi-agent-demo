@@ -7,7 +7,7 @@ spring:
   main:
     banner-mode: off
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:multi-agent-demo}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useAffectedRows=true
+    url: jdbc:mysql://${DB_HOST:10.30.3.93}:${DB_HOST:3876}/${DB_NAME:multi-agent-demo}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useAffectedRows=true
     username: ${DB_USERNAME:multi_agent_demo}
     password: ${DB_PASSWORD:multi_agent_demo@321}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -20,7 +20,7 @@ spring:
     alibaba:
       mcp:
         nacos:
-          server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+          server-addr: ${NACOS_SERVER_ADDR:10.30.3.93:7748}
           namespace: ${NACOS_NAMESPACE:public}
           username: ${NACOS_USERNAME:nacos}
           password: ${NACOS_PASSWORD:nacos}

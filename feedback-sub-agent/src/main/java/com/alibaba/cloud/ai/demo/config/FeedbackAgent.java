@@ -42,8 +42,7 @@ public class FeedbackAgent {
     ToolCallbackProvider toolsProvider;
 
     @Bean
-    public ReactAgent feedbackSubAgentBean(//@Qualifier("openAiChatModel") ChatModel chatModel,
-										   @Qualifier("dashscopeChatModel") ChatModel chatModel,
+    public ReactAgent feedbackSubAgentBean(@Qualifier("openAiChatModel") ChatModel chatModel,
 										   @Autowired(required = false)
 										   @Qualifier("loadbalancedMcpSyncToolCallbacks")
 										   ToolCallbackProvider toolsProvider) throws Exception {
