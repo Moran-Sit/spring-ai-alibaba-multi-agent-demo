@@ -2,16 +2,13 @@ package com.alibaba.cloud.ai.demo.common.rag;
 
 import com.alibaba.cloud.ai.demo.common.rag.vo.ResolveResult;
 import com.alibaba.cloud.ai.demo.common.rag.vo.RetrieverParam;
-import dev.langchain4j.data.document.Document;
 import dev.langchain4j.model.TokenCountEstimator;
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.rag.content.Content;
-import dev.langchain4j.rag.content.retriever.ContentRetriever;
-import dev.langchain4j.store.embedding.filter.Filter;
-import dev.langchain4j.store.embedding.filter.comparison.IsEqualTo;
-import dev.langchain4j.store.embedding.filter.comparison.IsIn;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.rag.retrieval.search.DocumentRetriever;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,20 +17,10 @@ import static com.alibaba.cloud.ai.demo.common.cosntant.AdiConstant.*;
 
 public interface IRAGService {
 
-
     void ingest(Document document, int overlap, String tokenizer);
 
-    ContentRetriever createRetriever(RetrieverParam param);
+    DocumentRetriever createRetriever(RetrieverParam param);
 
-
-    /**
-     * 根据模型的contentWindow计算使用该模型最多召回的文档数量
-     * <br/>以分块时的最大文本段对应的token数量{maxSegmentSizeInTokens}为计算因子
-     *
-     * @param userQuestion   用户的问题
-     * @param maxInputTokens AI模型所能容纳的窗口大小
-     * @return
-     */
     default int getRetrieveMaxResults(String userQuestion, int maxInputTokens) {
         if (maxInputTokens == 0) {
             return RAG_RETRIEVE_NUMBER_MAX;
@@ -45,7 +32,6 @@ public interface IRAGService {
         } else {
             return maxRetrieveDocLength / RAG_MAX_SEGMENT_SIZE_IN_TOKENS;
         }
-
     }
 
     default Integer isValidAndGetTokenCount(String userQuestion, int maxInputTokens) {
@@ -60,21 +46,24 @@ public interface IRAGService {
         return questionTokenCount;
     }
 
-    default Filter buildFilter(ResolveResult resolveResult) {
+    default Filter.Expression buildFilter(ResolveResult resolveResult) {
+        FilterExpressionBuilder builder = new FilterExpressionBuilder();
         if (CollectionUtils.isNotEmpty(resolveResult.getDocIds())) {
-            return new IsIn(DOC_KEY, resolveResult.getDocIds());
+            return builder.in(DOC_KEY, resolveResult.getDocIds()).build();
         } else if (StringUtils.isNotBlank(resolveResult.getKbId())) {
-            return new IsEqualTo(KB_KEY, resolveResult.getKbId());
+            return builder.eq(KB_KEY, resolveResult.getKbId()).build();
         }
-        throw new RuntimeException("无法构建Filter，缺乏必要的知识库ID或文档ID");
+        throw new RuntimeException("无法构建Filter，缺少必要的知识库ID或文档ID");
     }
 
-    default String buildContent(List<Content> contents) {
-        if (contents == null || contents.isEmpty()) {
+    default String buildContent(List<Document> documents) {
+        if (documents == null || documents.isEmpty()) {
             return NONE;
         }
-        return contents.stream()
-                .map(c -> c.textSegment().text().trim())
+        return documents.stream()
+                .map(Document::getText)
+                .filter(StringUtils::isNotBlank)
+                .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .distinct()
                 .limit(DEFAULT_TOP_N)

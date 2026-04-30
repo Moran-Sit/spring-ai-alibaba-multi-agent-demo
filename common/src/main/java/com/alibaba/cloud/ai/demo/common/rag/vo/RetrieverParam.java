@@ -1,10 +1,10 @@
 package com.alibaba.cloud.ai.demo.common.rag.vo;
 
-import dev.langchain4j.store.embedding.filter.Filter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.ai.vectorstore.filter.Filter;
 
 /**
  * @author Wolf
@@ -20,7 +20,7 @@ public class RetrieverParam {
     /**
      * 过滤条件
      */
-    private Filter filter;
+    private Filter.Expression filter;
     /**
      * 最大返回数量
      */

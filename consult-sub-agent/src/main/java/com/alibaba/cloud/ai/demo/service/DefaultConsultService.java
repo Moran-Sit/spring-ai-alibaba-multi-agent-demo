@@ -20,13 +20,11 @@ import com.alibaba.cloud.ai.demo.common.rag.EmbeddingRag;
 import com.alibaba.cloud.ai.demo.common.rag.vo.RetrieverParam;
 import com.alibaba.cloud.ai.demo.entity.Product;
 import com.alibaba.cloud.ai.demo.mapper.ProductMapper;
-import dev.langchain4j.data.document.DefaultDocument;
-import dev.langchain4j.data.document.Metadata;
-import dev.langchain4j.rag.content.Content;
-import dev.langchain4j.rag.query.Query;
-import dev.langchain4j.store.embedding.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.rag.Query;
+import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -37,7 +35,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 咨询知识库服务类
@@ -57,17 +57,16 @@ public class DefaultConsultService implements IConsultService {
     @Override
     public void ingestKnowledge() {
         try {
-            PathMatchingResourcePatternResolver resolver =
-                    new PathMatchingResourcePatternResolver();
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
             Resource[] resources = resolver.getResources("classpath*:knowledge/**");
             Arrays.stream(resources).forEach(resource -> {
                 try {
                     String content = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-                    Metadata metadata = new Metadata();
+                    Map<String, Object> metadata = new HashMap<>();
                     metadata.put("filename", resource.getFilename());
                     metadata.put("timestamp", System.currentTimeMillis());
-                    DefaultDocument document = new DefaultDocument(content, metadata);
+                    Document document = new Document(content, metadata);
                     knowledgeBaseRag.ingest(document, 100, null);
                 } catch (IOException e) {
                     logger.error("Failed to read resource: {}", resource.getFilename(), e);
@@ -86,20 +85,20 @@ public class DefaultConsultService implements IConsultService {
         logger.info("请求参数 - query: {}", query);
 
         try {
-            List<Content> contents = knowledgeBaseRag.createRetriever(buildRetrieverParam()).retrieve(Query.from(query));
-            logger.info("检索到文档数量: {}", contents.size());
+            List<Document> documents = knowledgeBaseRag.createRetriever(buildRetrieverParam()).retrieve(new Query(query));
+            logger.info("检索到文档数量: {}", documents.size());
 
-            if (contents.isEmpty()) {
+            if (documents.isEmpty()) {
                 String result = "未找到相关资料，查询内容：" + query;
                 logger.info("=== ConsultService.searchKnowledge 出口 ===");
                 logger.info("返回结果: {}", result);
                 return result;
             }
 
-            String finalResult = knowledgeBaseRag.buildContent(contents);
+            String finalResult = knowledgeBaseRag.buildContent(documents);
             logger.info("=== ConsultService.searchKnowledge 出口 ===");
             logger.info("返回结果长度: {} 字符", finalResult.length());
-            logger.info("返回结果预览: {}", finalResult.length() > 200 ? finalResult.substring(0, 200) + "..." : finalResult);
+            logger.info("返回结果预览: {}", finalResult.length() > 500 ? finalResult.substring(0, 500) + "..." : finalResult);
 
             return finalResult;
         } catch (Exception e) {
@@ -115,7 +114,7 @@ public class DefaultConsultService implements IConsultService {
         return this.buildRetrieverParam(null, false);
     }
 
-    private RetrieverParam buildRetrieverParam(Filter filter, boolean isInterrupt) {
+    private RetrieverParam buildRetrieverParam(Filter.Expression filter, boolean isInterrupt) {
         RetrieverParam.RetrieverParamBuilder paramBuilder = RetrieverParam.builder();
         paramBuilder.isSearchMissInterrupt(isInterrupt)
                 .filter(filter);
